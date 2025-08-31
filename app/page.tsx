@@ -208,7 +208,7 @@ export default function KaraokeStudio() {
                 </div>
                 <div>
                   <CardTitle className="text-lg">Music Track</CardTitle>
-                  <CardDescription className="text-muted-foreground">Upload your MP3 file</CardDescription>
+                  <CardDescription>Upload your MP3 file</CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -241,7 +241,7 @@ export default function KaraokeStudio() {
                         ? validation.music.isValid 
                           ? 'text-[var(--status-success)]' 
                           : 'text-[var(--status-error)]'
-                        : 'text-muted-foreground'
+                        : 'text-[var(--text-light)]'
                     }`}>
                       {uploads.music ? uploads.music.name : "Click to upload MP3"}
                     </p>
@@ -293,17 +293,17 @@ export default function KaraokeStudio() {
                 </div>
                 <div>
                   <CardTitle className="text-lg">Lyrics</CardTitle>
-                  <CardDescription className="text-muted-foreground">Paste or type your lyrics</CardDescription>
+                  <CardDescription>Paste or type your lyrics</CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <Textarea
-                  placeholder="Paste your lyrics here...&#10;&#10;💡 Use [MM:SS.mm] tags for precise timing:&#10;[00:01.23]First line&#10;[00:03.45]Second line"
+                  placeholder="Paste lyrics here&#10;&#10;[00:01.23]First line"
                   value={uploads.lyrics}
                   onChange={(e) => handleLyricsChange(e.target.value)}
-                  className={`min-h-[120px] resize-none ${
+                  className={`min-h-[120px] resize-none placeholder:text-[var(--text-light)] ${
                     uploads.lyrics.trim() 
                       ? validation.lyrics.isValid 
                         ? 'border-[var(--status-success)]/50 bg-[var(--status-success)]/5' 
@@ -311,7 +311,7 @@ export default function KaraokeStudio() {
                       : ''
                   }`}
                 />
-                <div className="text-xs text-muted-foreground">
+                <div className="text-xs text-[var(--text-light)]">
                   <p>💡 <strong>LRC Format:</strong> Use <code className="bg-muted px-1 rounded">[MM:SS.mm]</code> tags for precise timing</p>
                 </div>
                 {uploads.lyrics.trim() && (
@@ -360,7 +360,7 @@ export default function KaraokeStudio() {
                 </div>
                 <div>
                   <CardTitle className="text-lg">Background</CardTitle>
-                  <CardDescription className="text-muted-foreground">Choose your video background</CardDescription>
+                  <CardDescription>Choose your video background</CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -393,7 +393,7 @@ export default function KaraokeStudio() {
                         ? validation.background.isValid 
                           ? 'text-[var(--status-success)]' 
                           : 'text-[var(--status-error)]'
-                        : 'text-muted-foreground'
+                        : 'text-[var(--text-light)]'
                     }`}>
                       {uploads.background ? uploads.background.name : "Click to upload image"}
                     </p>
@@ -423,7 +423,7 @@ export default function KaraokeStudio() {
         <Card className="mb-8">
           <CardHeader>
             <CardTitle className="text-xl font-[var(--font-playfair)]">Generate Your Karaoke Video</CardTitle>
-            <CardDescription className="text-muted-foreground">
+            <CardDescription>
               Once all files are uploaded, click generate to create your synchronized karaoke video.
             </CardDescription>
           </CardHeader>
