@@ -34,6 +34,8 @@ export default function KaraokeStudio() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [progress, setProgress] = useState(0)
   const [generatedVideo, setGeneratedVideo] = useState<string | null>(null)
+  const [downloadProgress, setDownloadProgress] = useState(0)
+  const [isDownloading, setIsDownloading] = useState(false)
 
   const validateFile = (file: File, type: "music" | "background") => {
     const maxSize = type === "music" ? 50 * 1024 * 1024 : 10 * 1024 * 1024 // 50MB for music, 10MB for images
@@ -76,37 +78,55 @@ export default function KaraokeStudio() {
     setIsGenerating(true)
     setProgress(0)
 
-    // Simulate video generation progress
+    // Simulate fast video generation progress (faster than before)
     const interval = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 100) {
           clearInterval(interval)
           setIsGenerating(false)
-          setGeneratedVideo("karaoke-video.mp4") // Placeholder video URL
+          setGeneratedVideo("karaoke-video") // Base filename for multiple formats
           return 100
         }
-        return prev + 10
+        return prev + 20 // Faster progress
       })
-    }, 500)
+    }, 200) // Faster interval
   }
 
-  const handleDownload = () => {
+  const handleDownload = async (format: 'mp4' | 'webm') => {
     if (!generatedVideo) return
     
-    // Create a blob with sample video data (in real app, this would be the actual video)
-    const videoBlob = new Blob(['Sample karaoke video data'], { type: 'video/mp4' })
-    const url = URL.createObjectURL(videoBlob)
+    setIsDownloading(true)
+    setDownloadProgress(0)
     
-    // Create download link
-    const link = document.createElement('a')
-    link.href = url
-    link.download = generatedVideo
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    
-    // Clean up
-    URL.revokeObjectURL(url)
+    // Simulate download progress
+    const interval = setInterval(() => {
+      setDownloadProgress((prev) => {
+        if (prev >= 100) {
+          clearInterval(interval)
+          setIsDownloading(false)
+          setDownloadProgress(0)
+          
+          // Create a blob with sample video data (in real app, this would be the actual video)
+          const videoBlob = new Blob(['Sample karaoke video data'], { 
+            type: format === 'mp4' ? 'video/mp4' : 'video/webm' 
+          })
+          const url = URL.createObjectURL(videoBlob)
+          
+          // Create download link
+          const link = document.createElement('a')
+          link.href = url
+          link.download = `${generatedVideo}.${format}`
+          document.body.appendChild(link)
+          link.click()
+          document.body.removeChild(link)
+          
+          // Clean up
+          URL.revokeObjectURL(url)
+          return 100
+        }
+        return prev + 25 // Fast download progress
+      })
+    }, 100) // Very fast interval
   }
 
   const handleReset = () => {
@@ -122,7 +142,9 @@ export default function KaraokeStudio() {
     })
     setGeneratedVideo(null)
     setProgress(0)
+    setDownloadProgress(0)
     setIsGenerating(false)
+    setIsDownloading(false)
   }
 
   const canGenerate = validation.music.isValid && validation.lyrics.isValid && validation.background.isValid
@@ -186,7 +208,7 @@ export default function KaraokeStudio() {
                 </div>
                 <div>
                   <CardTitle className="text-lg">Music Track</CardTitle>
-                  <CardDescription>Upload your MP3 file</CardDescription>
+                  <CardDescription className="text-muted-foreground">Upload your MP3 file</CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -271,17 +293,17 @@ export default function KaraokeStudio() {
                 </div>
                 <div>
                   <CardTitle className="text-lg">Lyrics</CardTitle>
-                  <CardDescription>Paste or type your lyrics</CardDescription>
+                  <CardDescription className="text-muted-foreground">Paste or type your lyrics</CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <Textarea
-                  placeholder="Paste your lyrics here...&#10;&#10;Each line will be synchronized with the music automatically."
+                  placeholder="Paste your lyrics here...&#10;&#10;Each line will be synchronized with the music automatically.&#10;&#10;💡 Tip: Use LRC tags for precise timing:&#10;[00:01.23]First line of lyrics&#10;[00:03.45]Second line of lyrics&#10;[00:05.67]Third line of lyrics"
                   value={uploads.lyrics}
                   onChange={(e) => handleLyricsChange(e.target.value)}
-                  className={`min-h-[120px] resize-none ${
+                  className={`min-h-[140px] resize-none ${
                     uploads.lyrics.trim() 
                       ? validation.lyrics.isValid 
                         ? 'border-[var(--status-success)]/50 bg-[var(--status-success)]/5' 
@@ -289,6 +311,15 @@ export default function KaraokeStudio() {
                       : ''
                   }`}
                 />
+                <div className="text-xs text-muted-foreground bg-muted/50 p-3 rounded-md">
+                  <p className="font-medium mb-1">📝 LRC Format (Optional but Recommended):</p>
+                  <p className="text-xs">Use <code className="bg-background px-1 rounded">[MM:SS.mm]</code> tags for precise timing. Example:</p>
+                  <code className="block text-xs mt-1 bg-background p-2 rounded border">
+                    [00:01.23]First line of lyrics<br/>
+                    [00:03.45]Second line of lyrics<br/>
+                    [00:05.67]Third line of lyrics
+                  </code>
+                </div>
                 {uploads.lyrics.trim() && (
                   <div className={`flex items-center gap-2 text-sm ${
                     validation.lyrics.isValid 
@@ -335,7 +366,7 @@ export default function KaraokeStudio() {
                 </div>
                 <div>
                   <CardTitle className="text-lg">Background</CardTitle>
-                  <CardDescription>Choose your video background</CardDescription>
+                  <CardDescription className="text-muted-foreground">Choose your video background</CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -398,7 +429,7 @@ export default function KaraokeStudio() {
         <Card className="mb-8">
           <CardHeader>
             <CardTitle className="text-xl font-[var(--font-playfair)]">Generate Your Karaoke Video</CardTitle>
-            <CardDescription>
+            <CardDescription className="text-muted-foreground">
               Once all files are uploaded, click generate to create your synchronized karaoke video.
             </CardDescription>
           </CardHeader>
@@ -416,15 +447,38 @@ export default function KaraokeStudio() {
 
               {generatedVideo && !isGenerating && (
                 <div className="bg-muted/50 rounded-lg p-6 text-center">
-                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Play className="w-8 h-8 text-primary" />
+                  <div className="w-16 h-16 bg-[var(--status-success)]/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Play className="w-8 h-8 text-[var(--status-success)]" />
                   </div>
                   <h3 className="text-lg font-semibold mb-2">Video Generated Successfully!</h3>
                   <p className="text-muted-foreground mb-4">Your karaoke video is ready to download.</p>
-                  <div className="flex gap-3">
-                    <Button onClick={handleDownload} className="gap-2">
+                  
+                  {isDownloading && (
+                    <div className="mb-4">
+                      <div className="flex items-center justify-between text-sm mb-2">
+                        <span className="text-muted-foreground">Downloading...</span>
+                        <span className="text-[var(--status-success)] font-medium">{downloadProgress}%</span>
+                      </div>
+                      <Progress value={downloadProgress} className="h-2" />
+                    </div>
+                  )}
+                  
+                  <div className="flex gap-3 justify-center">
+                    <Button 
+                      onClick={() => handleDownload('mp4')} 
+                      disabled={isDownloading}
+                      className="gap-2 bg-blue-600 hover:bg-blue-700"
+                    >
                       <Download className="w-4 h-4" />
-                      Download Video
+                      Download MP4
+                    </Button>
+                    <Button 
+                      onClick={() => handleDownload('webm')} 
+                      disabled={isDownloading}
+                      className="gap-2 bg-green-600 hover:bg-green-700"
+                    >
+                      <Download className="w-4 h-4" />
+                      Download WebM
                     </Button>
                     <Button onClick={handleReset} variant="outline" className="gap-2">
                       <RotateCcw className="w-4 h-4" />
@@ -439,7 +493,11 @@ export default function KaraokeStudio() {
                   onClick={generateVideo}
                   disabled={!canGenerate || isGenerating}
                   size="lg"
-                  className="w-full gap-2"
+                  className={`w-full gap-2 transition-all duration-300 ${
+                    canGenerate && !isGenerating 
+                      ? 'bg-[var(--status-success)] hover:bg-[var(--status-success)]/90 text-white shadow-lg scale-105' 
+                      : ''
+                  }`}
                 >
                   <Sparkles className="w-5 h-5" />
                   {isGenerating ? "Generating..." : "Generate Karaoke Video"}
