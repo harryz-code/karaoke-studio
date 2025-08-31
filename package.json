@@ -19,7 +19,8 @@
     "@radix-ui/react-progress": "^1.0.3",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
-    "tailwind-merge": "^2.0.0"
+    "tailwind-merge": "^2.0.0",
+    "fluent-ffmpeg": "^2.1.2"
   },
   "devDependencies": {
     "typescript": "^5",

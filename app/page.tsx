@@ -12,6 +12,9 @@ interface UploadState {
   music: File | null
   lyrics: string
   background: File | null
+  title: string
+  artist: string
+  includeIntro: boolean
 }
 
 interface ValidationState {
@@ -25,6 +28,9 @@ export default function KaraokeStudio() {
     music: null,
     lyrics: "",
     background: null,
+    title: "",
+    artist: "",
+    includeIntro: true,
   })
   const [validation, setValidation] = useState<ValidationState>({
     music: { isValid: false },
@@ -36,6 +42,10 @@ export default function KaraokeStudio() {
   const [generatedVideo, setGeneratedVideo] = useState<string | null>(null)
   const [downloadProgress, setDownloadProgress] = useState(0)
   const [isDownloading, setIsDownloading] = useState(false)
+  const [uploadedFiles, setUploadedFiles] = useState<{
+    music?: string
+    background?: string
+  }>({})
 
   const validateFile = (file: File, type: "music" | "background") => {
     const maxSize = type === "music" ? 50 * 1024 * 1024 : 10 * 1024 * 1024 // 50MB for music, 10MB for images
@@ -54,10 +64,30 @@ export default function KaraokeStudio() {
     return { isValid: true }
   }
 
-  const handleFileUpload = (type: "music" | "background", file: File) => {
+  const handleFileUpload = async (type: "music" | "background", file: File) => {
     const validation = validateFile(file, type)
     setUploads((prev) => ({ ...prev, [type]: file }))
     setValidation((prev) => ({ ...prev, [type]: validation }))
+    
+    if (validation.isValid) {
+      try {
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('type', type)
+        
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData
+        })
+        
+        if (response.ok) {
+          const result = await response.json()
+          setUploadedFiles(prev => ({ ...prev, [type]: result.filename }))
+        }
+      } catch (error) {
+        console.error('Upload failed:', error)
+      }
+    }
   }
 
   const handleLyricsChange = (lyrics: string) => {
@@ -73,23 +103,39 @@ export default function KaraokeStudio() {
   }
 
   const generateVideo = async () => {
-    if (!uploads.music || !uploads.lyrics || !uploads.background) return
+    if (!uploads.music || !uploads.lyrics || !uploads.title || !uploads.artist) return
 
     setIsGenerating(true)
     setProgress(0)
 
-    // Simulate fast video generation progress (faster than before)
-    const interval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval)
-          setIsGenerating(false)
-          setGeneratedVideo("karaoke-video") // Base filename for multiple formats
-          return 100
-        }
-        return prev + 20 // Faster progress
+    try {
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          musicFile: uploadedFiles.music,
+          lyrics: uploads.lyrics,
+          backgroundFile: uploadedFiles.background,
+          title: uploads.title,
+          artist: uploads.artist,
+          includeIntro: uploads.includeIntro,
+        }),
       })
-    }, 200) // Faster interval
+
+      if (response.ok) {
+        const result = await response.json()
+        setGeneratedVideo(result.filename)
+        setProgress(100)
+      } else {
+        throw new Error('Video generation failed')
+      }
+    } catch (error) {
+      console.error('Generation error:', error)
+    } finally {
+      setIsGenerating(false)
+    }
   }
 
   const handleDownload = async (format: 'mp4' | 'webm') => {
@@ -98,35 +144,34 @@ export default function KaraokeStudio() {
     setIsDownloading(true)
     setDownloadProgress(0)
     
-    // Simulate download progress
-    const interval = setInterval(() => {
-      setDownloadProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval)
-          setIsDownloading(false)
-          setDownloadProgress(0)
-          
-          // Create a blob with sample video data (in real app, this would be the actual video)
-          const videoBlob = new Blob(['Sample karaoke video data'], { 
-            type: format === 'mp4' ? 'video/mp4' : 'video/webm' 
-          })
-          const url = URL.createObjectURL(videoBlob)
-          
-          // Create download link
-          const link = document.createElement('a')
-          link.href = url
-          link.download = `${generatedVideo}.${format}`
-          document.body.appendChild(link)
-          link.click()
-          document.body.removeChild(link)
-          
-          // Clean up
-          URL.revokeObjectURL(url)
-          return 100
-        }
-        return prev + 25 // Fast download progress
-      })
-    }, 100) // Very fast interval
+    try {
+      // Download the actual generated video
+      const response = await fetch(`/api/video/${generatedVideo}`)
+      
+      if (response.ok) {
+        const videoBlob = await response.blob()
+        const url = URL.createObjectURL(videoBlob)
+        
+        // Create download link
+        const link = document.createElement('a')
+        link.href = url
+        link.download = `${generatedVideo}`
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        
+        // Clean up
+        URL.revokeObjectURL(url)
+        setDownloadProgress(100)
+      } else {
+        throw new Error('Download failed')
+      }
+    } catch (error) {
+      console.error('Download error:', error)
+    } finally {
+      setIsDownloading(false)
+      setDownloadProgress(0)
+    }
   }
 
   const handleReset = () => {
@@ -134,12 +179,16 @@ export default function KaraokeStudio() {
       music: null,
       lyrics: "",
       background: null,
+      title: "",
+      artist: "",
+      includeIntro: true,
     })
     setValidation({
       music: { isValid: false },
       lyrics: { isValid: false },
       background: { isValid: false },
     })
+    setUploadedFiles({})
     setGeneratedVideo(null)
     setProgress(0)
     setDownloadProgress(0)
@@ -147,7 +196,7 @@ export default function KaraokeStudio() {
     setIsDownloading(false)
   }
 
-  const canGenerate = validation.music.isValid && validation.lyrics.isValid && validation.background.isValid
+  const canGenerate = validation.music.isValid && validation.lyrics.isValid && uploads.title.trim() && uploads.artist.trim()
 
   return (
     <div className="min-h-screen bg-background">
@@ -419,6 +468,51 @@ export default function KaraokeStudio() {
           </Card>
         </div>
 
+        {/* Song Information */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="text-xl font-[var(--font-playfair)]">Song Information</CardTitle>
+            <CardDescription>
+              Add the song title and artist name for your karaoke video.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Song Title *</label>
+                <input
+                  type="text"
+                  placeholder="Enter song title"
+                  value={uploads.title}
+                  onChange={(e) => setUploads(prev => ({ ...prev, title: e.target.value }))}
+                  className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground placeholder:text-[var(--text-light)]"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Artist *</label>
+                <input
+                  type="text"
+                  placeholder="Enter artist name"
+                  value={uploads.artist}
+                  onChange={(e) => setUploads(prev => ({ ...prev, artist: e.target.value }))}
+                  className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground placeholder:text-[var(--text-light)]"
+                />
+              </div>
+            </div>
+            <div className="mt-6">
+              <label className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={uploads.includeIntro}
+                  onChange={(e) => setUploads(prev => ({ ...prev, includeIntro: e.target.checked }))}
+                  className="rounded border-border"
+                />
+                <span className="text-sm">Include 3-second intro with title and artist (optional)</span>
+              </label>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Generation Section */}
         <Card className="mb-8">
           <CardHeader>
@@ -465,14 +559,6 @@ export default function KaraokeStudio() {
                     >
                       <Download className="w-4 h-4" />
                       Download MP4
-                    </Button>
-                    <Button 
-                      onClick={() => handleDownload('webm')} 
-                      disabled={isDownloading}
-                      className="gap-2 bg-green-600 hover:bg-green-700"
-                    >
-                      <Download className="w-4 h-4" />
-                      Download WebM
                     </Button>
                     <Button onClick={handleReset} variant="outline" className="gap-2">
                       <RotateCcw className="w-4 h-4" />
