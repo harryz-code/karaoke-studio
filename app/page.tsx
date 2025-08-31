@@ -311,7 +311,7 @@ export default function KaraokeStudio() {
                       : ''
                   }`}
                 />
-                <div className="text-xs text-[var(--text-light)]">
+                <div className="text-xs">
                   <p>💡 <strong>LRC Format:</strong> Use <code className="bg-muted px-1 rounded">[MM:SS.mm]</code> tags for precise timing. Example: <code className="bg-muted px-1 rounded">[00:01.23]</code></p>
                 </div>
                 {uploads.lyrics.trim() && (
