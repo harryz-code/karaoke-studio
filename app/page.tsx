@@ -300,10 +300,10 @@ export default function KaraokeStudio() {
             <CardContent>
               <div className="space-y-4">
                 <Textarea
-                  placeholder="Paste your lyrics here...&#10;&#10;Each line will be synchronized with the music automatically.&#10;&#10;💡 Tip: Use LRC tags for precise timing:&#10;[00:01.23]First line of lyrics&#10;[00:03.45]Second line of lyrics&#10;[00:05.67]Third line of lyrics"
+                  placeholder="Paste your lyrics here...&#10;&#10;💡 Use [MM:SS.mm] tags for precise timing:&#10;[00:01.23]First line&#10;[00:03.45]Second line"
                   value={uploads.lyrics}
                   onChange={(e) => handleLyricsChange(e.target.value)}
-                  className={`min-h-[140px] resize-none ${
+                  className={`min-h-[120px] resize-none ${
                     uploads.lyrics.trim() 
                       ? validation.lyrics.isValid 
                         ? 'border-[var(--status-success)]/50 bg-[var(--status-success)]/5' 
@@ -311,14 +311,8 @@ export default function KaraokeStudio() {
                       : ''
                   }`}
                 />
-                <div className="text-xs text-muted-foreground bg-muted/50 p-3 rounded-md">
-                  <p className="font-medium mb-1">📝 LRC Format (Optional but Recommended):</p>
-                  <p className="text-xs">Use <code className="bg-background px-1 rounded">[MM:SS.mm]</code> tags for precise timing. Example:</p>
-                  <code className="block text-xs mt-1 bg-background p-2 rounded border">
-                    [00:01.23]First line of lyrics<br/>
-                    [00:03.45]Second line of lyrics<br/>
-                    [00:05.67]Third line of lyrics
-                  </code>
+                <div className="text-xs text-muted-foreground">
+                  <p>💡 <strong>LRC Format:</strong> Use <code className="bg-muted px-1 rounded">[MM:SS.mm]</code> tags for precise timing</p>
                 </div>
                 {uploads.lyrics.trim() && (
                   <div className={`flex items-center gap-2 text-sm ${
