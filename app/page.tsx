@@ -234,7 +234,7 @@ export default function KaraokeStudio() {
                         ? validation.music.isValid 
                           ? 'text-[var(--status-success)]' 
                           : 'text-[var(--status-error)]'
-                        : 'text-muted-foreground'
+                        : 'text-[var(--text-light)]'
                     }`} />
                     <p className={`text-sm ${
                       uploads.music 
@@ -300,7 +300,7 @@ export default function KaraokeStudio() {
             <CardContent>
               <div className="space-y-4">
                 <Textarea
-                  placeholder="Paste lyrics here&#10;&#10;[00:01.23]First line"
+                  placeholder="Paste lyrics here"
                   value={uploads.lyrics}
                   onChange={(e) => handleLyricsChange(e.target.value)}
                   className={`min-h-[120px] resize-none placeholder:text-[var(--text-light)] ${
@@ -312,7 +312,7 @@ export default function KaraokeStudio() {
                   }`}
                 />
                 <div className="text-xs text-[var(--text-light)]">
-                  <p>💡 <strong>LRC Format:</strong> Use <code className="bg-muted px-1 rounded">[MM:SS.mm]</code> tags for precise timing</p>
+                  <p>💡 <strong>LRC Format:</strong> Use <code className="bg-muted px-1 rounded">[MM:SS.mm]</code> tags for precise timing. Example: <code className="bg-muted px-1 rounded">[00:01.23]</code></p>
                 </div>
                 {uploads.lyrics.trim() && (
                   <div className={`flex items-center gap-2 text-sm ${
@@ -386,7 +386,7 @@ export default function KaraokeStudio() {
                         ? validation.background.isValid 
                           ? 'text-[var(--status-success)]' 
                           : 'text-[var(--status-error)]'
-                        : 'text-muted-foreground'
+                        : 'text-[var(--text-light)]'
                     }`} />
                     <p className={`text-sm ${
                       uploads.background 
